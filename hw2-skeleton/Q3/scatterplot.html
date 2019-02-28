@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>jlew7</title>
+		<script type="text/javascript" src="../lib/d3.v5.min.js"></script>
+		<style type="text/css">
+
+			.axis path,
+			.axis line {
+				fill: none;
+				stroke: black;
+				shape-rendering: crispEdges;
+			}
+
+			.axis text {
+				font-family: sans-serif;
+				font-size: 11px;
+			}
+
+		</style>
+	</head>
+	<body>
+		<script type="text/javascript">
+
+			//Dataset from csv
+      d3.csv('wine_quality.csv', function (data) {
+
+			var body = d3.select('body')
+				//Width and height
+				var w = 800;
+				var h = 600;
+				var padding = 60;
+
+			//Create scale functions
+			var xScale = d3.scale.linear()
+								 .domain([0, d3.max(data, function(d) { return (d.alcohol * 1.1); })])
+								 .range([padding, w-padding *2]);
+
+			var yScale = d3.scale.linear()
+								 .domain([0, d3.max(data, function(d) { return (d.pH * 1.1); })])
+								 .range([h - padding, padding*2.5]);
+
+		  var xScale2 = d3.scale.linear()
+								 .domain([0, d3.max(data, function(d) { return (d.residual_sugar * 1.1); })])
+								 .range([padding, w-padding *2]);
+
+			var rScale3 = d3.scale.linear()
+								 .domain([0, d3.max(data, function(d) { return (1/(d.alcohol * d.pH)) })])
+								 .range([20,60]);
+
+		  var xScale4_5 = d3.scale.linear()
+		 					 .domain([0, d3.max(data, function(d) { return (d.pH * 1.1) })])
+		 					 .range([padding, w-padding *2]);
+
+		  var yScale4 = d3.scale.sqrt()
+		 					 .domain([0, d3.max(data, function(d) { return (d.sulphates * 1.1) })])
+		 					 .range([h - padding, padding*2.5]);
+
+			var yScale5 = d3.scale.log()
+		 					 .domain([d3.min(data, function(d) { return (d.sulphates * .9)}), d3.max(data, function(d) { return (d.sulphates * 1.1) })])
+		 					 .range([h - padding, padding*2.5]);
+
+
+			//Define X axis (for alcohol)
+			var xAxis = d3.svg.axis()
+							  .scale(xScale)
+							  .orient("bottom")
+							  .ticks(15);
+
+			//Define Y axis (for pH)
+			var yAxis = d3.svg.axis()
+							  .scale(yScale)
+							  .orient("left")
+							  .ticks(10);
+
+			//Define X axis (for sulphates)
+			var xAxis2 = d3.svg.axis()
+							  .scale(xScale2)
+							  .orient("bottom")
+							  .ticks(15);
+
+			//Define X axis (for pH)
+			var xAxis4_5 = d3.svg.axis()
+							  .scale(xScale4_5)
+							  .orient("bottom")
+							  .ticks(9);
+
+			//Define Y axis (for sulphates-sqrt)
+			var yAxis4 = d3.svg.axis()
+							  .scale(yScale4)
+							  .orient("left")
+							  .ticks(10);
+
+			//Define Y axis (for sulphates-log)
+			var yAxis5 = d3.svg.axis()
+							  .scale(yScale5)
+							  .orient("left")
+							  .ticks(10);
+
+			//chart 1 (pH vs. Alcohol)
+					//Creating SVG element
+					var svg1 = body.append('svg')
+								.attr("width", w)
+								.attr("height", h)
+
+		      //Create plots (crosses and circles)
+		      svg1.selectAll("plots")
+				   .data(data)
+				   .enter()
+		       .append("path")
+					 .attr("d", d3.svg.symbol()
+					 .size( function(d) { return 40 })
+					 .type( function(d) {if (d.quality >= 6.0) {return "cross"} else {return "circle"}}))
+					 .attr('stroke', function(d) {
+						 if (d.quality >= 6.0) { return 'blue' }
+						 else { return 'red' }
+					 })
+		       .attr('fill', 'white')
+				   .attr("transform", function(d) {
+				   		return "translate(" + xScale(d.alcohol) + "," + yScale(d.pH) + ")";
+				   })
+
+					//Create X axis and label
+					svg1.append("g")
+						.attr("class", "axis")
+						.attr("transform", "translate(0," + (h - padding) + ")")
+						.call(xAxis)
+					.append('text')
+						.attr('class','label')
+						.attr('y',+padding-10)
+		      	.attr('x',w/2)
+		      	.attr('dy','.71em')
+		      	.style('text-anchor','end')
+		      	.text('Alcohol')
+
+					//Create Y axis and label
+					svg1.append("g")
+						.attr("class", "axis")
+						.attr("transform", "translate(" + padding + ",0)")
+						.call(yAxis)
+					.append('text')
+			      .attr('class','label')
+			      .attr('transform','rotate(-90)')
+			      .attr('x',-(h/2))
+			      .attr('y',-padding)
+			      .attr('dy','.71em')
+			      .style('text-anchor','end')
+			      .text('pH')
+
+		      //Create title
+		      svg1.append("text")
+		        .attr("x", padding+20)
+		        .attr("y", padding+30)
+		        .attr("text-anchor", "left")
+		        .style("font-size", "25px")
+		        .text("pH vs. Alcohol");
+
+					//Create legend
+					var legendcross = d3.select('svg').append('g').attr('transform', 'translate(620,80)');
+					var cross = d3.svg.symbol().size(70).type('cross');
+					legendcross.append('path')
+								.attr('d', cross())
+								.attr('stroke', 'blue')
+								.attr('fill', 'white');
+
+					svg1.append("text")
+			      	.attr("x", w - 160)
+							.attr("y", 83)
+			      	.attr("text-anchor", "left")
+							.style("font-size", "12px")
+			      	.text("Good");
+
+					svg1.append("circle")
+							.attr("cx", w-180)
+							.attr("cy", 100)
+							.attr("r", 5)
+							.attr('stroke', 'red')
+							.attr('fill', 'white')
+
+					svg1.append("text")
+			      	.attr("x", w - 160)
+							.attr("y", 103)
+			      	.attr("text-anchor", "left")
+							.style("font-size", "12px")
+			      	.text("Bad");
+
+			//chart 2 (pH vs. Residual Sugar)
+					//Creating SVG element
+					var svg2 = body.append('svg')
+								.attr("width", w)
+								.attr("height", h)
+
+					//Create plots (crosses and circles)
+					svg2.selectAll("plots")
+					 .data(data)
+					 .enter()
+					 .append("path")
+					 .attr("d", d3.svg.symbol()
+					 .size( function(d) { return 40 })
+					 .type( function(d) {if (d.quality >= 6.0) {return "cross"} else {return "circle"}}))
+					 .attr('stroke', function(d) {
+						 if (d.quality >= 6.0) { return 'blue' }
+						 else { return 'red' }
+					 })
+					 .attr('fill', 'white')
+					 .attr("transform", function(d) {
+							return "translate(" + xScale2(d.residual_sugar) + "," + yScale(d.pH) + ")";
+					 })
+
+					//Create X axis and label
+					svg2.append("g")
+						.attr("class", "axis")
+						.attr("transform", "translate(0," + (h - padding) + ")")
+						.call(xAxis2)
+					.append('text')
+						.attr('class','label')
+						.attr('y',+padding-10)
+						.attr('x',w/2)
+						.attr('dy','.71em')
+						.style('text-anchor','end')
+						.text('Residual Sugar')
+
+					//Create Y axis and label
+					svg2.append("g")
+						.attr("class", "axis")
+						.attr("transform", "translate(" + padding + ",0)")
+						.call(yAxis)
+					.append('text')
+						.attr('class','label')
+						.attr('transform','rotate(-90)')
+						.attr('x',-(h/2))
+						.attr('y',-padding)
+						.attr('dy','.71em')
+						.style('text-anchor','end')
+						.text('pH')
+
+					//Create title
+					svg2.append("text")
+						.attr("x", padding+20)
+						.attr("y", padding+30)
+						.attr("text-anchor", "left")
+						.style("font-size", "25px")
+						.text("pH vs. Residual Sugar");
+
+					//Create legend
+					var legendcross = svg2.append('g').attr('transform', 'translate(620,80)');
+					var cross = d3.svg.symbol().size(70).type('cross');
+					legendcross.append('path')
+								.attr('d', cross())
+								.attr('stroke', 'blue')
+								.attr('fill', 'white');
+
+					svg2.append("text")
+							.attr("x", w - 160)
+							.attr("y", 83)
+							.attr("text-anchor", "left")
+							.style("font-size", "12px")
+							.text("Good");
+
+					svg2.append("circle")
+							.attr("cx", w-180)
+							.attr("cy", 100)
+							.attr("r", 5)
+							.attr('stroke', 'red')
+							.attr('fill', 'white')
+
+					svg2.append("text")
+							.attr("x", w - 160)
+							.attr("y", 103)
+							.attr("text-anchor", "left")
+							.style("font-size", "12px")
+							.text("Bad");
+
+			//chart 3 (pH vs. Alcohol (scaled symbols))
+					//Creating SVG element
+					var svg3 = body.append('svg')
+								.attr("width", w)
+								.attr("height", h)
+
+		      //Create plots (crosses and circles)
+		      svg3.selectAll("plots")
+				   .data(data)
+				   .enter()
+		       .append("path")
+					 .attr("d", d3.svg.symbol()
+					 .size( function(d) { return rScale3(1/(d.alcohol * d.pH)) })
+					 .type( function(d) {if (d.quality >= 6.0) {return "cross"} else {return "circle"}}))
+					 .attr('stroke', function(d) {
+						 if (d.quality >= 6.0) { return 'blue' }
+						 else { return 'red' }
+					 })
+		       .attr('fill', 'white')
+				   .attr("transform", function(d) {
+				   		return "translate(" + xScale(d.alcohol) + "," + yScale(d.pH) + ")";
+				   })
+
+					//Create X axis and label
+					svg3.append("g")
+						.attr("class", "axis")
+						.attr("transform", "translate(0," + (h - padding) + ")")
+						.call(xAxis)
+					.append('text')
+						.attr('class','label')
+						.attr('y',+padding-10)
+		      	.attr('x',w/2)
+		      	.attr('dy','.71em')
+		      	.style('text-anchor','end')
+		      	.text('Alcohol')
+
+					//Create Y axis and label
+					svg3.append("g")
+						.attr("class", "axis")
+						.attr("transform", "translate(" + padding + ",0)")
+						.call(yAxis)
+					.append('text')
+			      .attr('class','label')
+			      .attr('transform','rotate(-90)')
+			      .attr('x',-(h/2))
+			      .attr('y',-padding)
+			      .attr('dy','.71em')
+			      .style('text-anchor','end')
+			      .text('pH')
+
+		      //Create title
+		      svg3.append("text")
+		        .attr("x", padding+20)
+		        .attr("y", padding+30)
+		        .attr("text-anchor", "left")
+		        .style("font-size", "25px")
+		        .text("pH vs. Alcohol (scaled symbols)");
+
+					//Create legend
+					var legendcross = svg3.append('g').attr('transform', 'translate(620,80)');
+					var cross = d3.svg.symbol().size(70).type('cross');
+					legendcross.append('path')
+								.attr('d', cross())
+								.attr('stroke', 'blue')
+								.attr('fill', 'white');
+
+					svg3.append("text")
+			      	.attr("x", w - 160)
+							.attr("y", 83)
+			      	.attr("text-anchor", "left")
+							.style("font-size", "12px")
+			      	.text("Good");
+
+					svg3.append("circle")
+							.attr("cx", w-180)
+							.attr("cy", 100)
+							.attr("r", 5)
+							.attr('stroke', 'red')
+							.attr('fill', 'white')
+
+					svg3.append("text")
+			      	.attr("x", w - 160)
+							.attr("y", 103)
+			      	.attr("text-anchor", "left")
+							.style("font-size", "12px")
+			      	.text("Bad");
+
+			//chart 4 (Sulphates vs. pH (square-root-scaled))
+					//Creating SVG element
+					var svg4 = body.append('svg')
+								.attr("width", w)
+								.attr("height", h)
+
+					//Create plots (crosses and circles)
+					svg4.selectAll("plots")
+					 .data(data)
+					 .enter()
+					 .append("path")
+					 .attr("d", d3.svg.symbol()
+					 .size( function(d) { return 40 })
+					 .type( function(d) {if (d.quality >= 6.0) {return "cross"} else {return "circle"}}))
+					 .attr('stroke', function(d) {
+						 if (d.quality >= 6.0) { return 'blue' }
+						 else { return 'red' }
+					 })
+					 .attr('fill', 'white')
+					 .attr("transform", function(d) {
+							return "translate(" + xScale4_5(d.pH) + "," + yScale4(d.sulphates) + ")";
+					 })
+
+					//Create X axis and label
+					svg4.append("g")
+						.attr("class", "axis")
+						.attr("transform", "translate(0," + (h - padding) + ")")
+						.call(xAxis4_5)
+					.append('text')
+						.attr('class','label')
+						.attr('y',+padding-10)
+						.attr('x',w/2)
+						.attr('dy','.71em')
+						.style('text-anchor','end')
+						.text('pH')
+
+					//Create Y axis and label
+					svg4.append("g")
+						.attr("class", "axis")
+						.attr("transform", "translate(" + padding + ",0)")
+						.call(yAxis4)
+					.append('text')
+						.attr('class','label')
+						.attr('transform','rotate(-90)')
+						.attr('x',-(h/2))
+						.attr('y',-padding)
+						.attr('dy','.71em')
+						.style('text-anchor','end')
+						.text('Sulphates')
+
+					//Create title
+					svg4.append("text")
+						.attr("x", padding+20)
+						.attr("y", padding+30)
+						.attr("text-anchor", "left")
+						.style("font-size", "25px")
+						.text("Sulphates vs. pH (square-root-scaled)");
+
+					//Create legend
+					var legendcross = svg4.append('g').attr('transform', 'translate(620,80)');
+					var cross = d3.svg.symbol().size(70).type('cross');
+					legendcross.append('path')
+								.attr('d', cross())
+								.attr('stroke', 'blue')
+								.attr('fill', 'white');
+
+					svg4.append("text")
+							.attr("x", w - 160)
+							.attr("y", 83)
+							.attr("text-anchor", "left")
+							.style("font-size", "12px")
+							.text("Good");
+
+					svg4.append("circle")
+							.attr("cx", w-180)
+							.attr("cy", 100)
+							.attr("r", 5)
+							.attr('stroke', 'red')
+							.attr('fill', 'white')
+
+					svg4.append("text")
+							.attr("x", w - 160)
+							.attr("y", 103)
+							.attr("text-anchor", "left")
+							.style("font-size", "12px")
+							.text("Bad");
+
+			//chart 5 (Sulphates vs. pH (log-scaled))
+					//Creating SVG element
+					var svg5 = body.append('svg')
+								.attr("width", w)
+								.attr("height", h)
+
+					//Create plots (crosses and circles)
+					svg5.selectAll("plots")
+					 .data(data)
+					 .enter()
+					 .append("path")
+					 .attr("d", d3.svg.symbol()
+					 .size( function(d) { return 40 })
+					 .type( function(d) {if (d.quality >= 6.0) {return "cross"} else {return "circle"}}))
+					 .attr('stroke', function(d) {
+						 if (d.quality >= 6.0) { return 'blue' }
+						 else { return 'red' }
+					 })
+					 .attr('fill', 'white')
+					 .attr("transform", function(d) {
+							return "translate(" + xScale4_5(d.pH) + "," + yScale5(d.sulphates) + ")";
+					 })
+
+					//Create X axis and label
+					svg5.append("g")
+						.attr("class", "axis")
+						.attr("transform", "translate(0," + (h - padding) + ")")
+						.call(xAxis4_5)
+					.append('text')
+						.attr('class','label')
+						.attr('y',+padding-10)
+						.attr('x',w/2)
+						.attr('dy','.71em')
+						.style('text-anchor','end')
+						.text('pH')
+
+					//Create Y axis and label
+					svg5.append("g")
+						.attr("class", "axis")
+						.attr("transform", "translate(" + padding + ",0)")
+						.call(yAxis5)
+					.append('text')
+						.attr('class','label')
+						.attr('transform','rotate(-90)')
+						.attr('x',-(h/2))
+						.attr('y',-padding)
+						.attr('dy','.71em')
+						.style('text-anchor','end')
+						.text('Sulphates')
+
+					//Create title
+					svg5.append("text")
+						.attr("x", padding+20)
+						.attr("y", padding+30)
+						.attr("text-anchor", "left")
+						.style("font-size", "25px")
+						.text("Sulphates vs. pH (log-scaled)");
+
+					//Create legend
+					var legendcross = svg5.append('g').attr('transform', 'translate(620,80)');
+					var cross = d3.svg.symbol().size(70).type('cross');
+					legendcross.append('path')
+								.attr('d', cross())
+								.attr('stroke', 'blue')
+								.attr('fill', 'white');
+
+					svg5.append("text")
+							.attr("x", w - 160)
+							.attr("y", 83)
+							.attr("text-anchor", "left")
+							.style("font-size", "12px")
+							.text("Good");
+
+					svg5.append("circle")
+							.attr("cx", w-180)
+							.attr("cy", 100)
+							.attr("r", 5)
+							.attr('stroke', 'red')
+							.attr('fill', 'white')
+
+					svg5.append("text")
+							.attr("x", w - 160)
+							.attr("y", 103)
+							.attr("text-anchor", "left")
+							.style("font-size", "12px")
+							.text("Bad");
+  });
+		</script>
+	</body>
+</html>
